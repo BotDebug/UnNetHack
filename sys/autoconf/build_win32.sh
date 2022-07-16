@@ -26,7 +26,7 @@ function compile_unnethack {
 
 rm -rf $INSTALL/share/unnethack $DESTDIR/unnethack-win32-*
 
-GRAPHICS="--disable-mswin-graphics --enable-tty-graphics"
+GRAPHICS="--disable-mswin-graphics --enable-tty-graphics --enable-curses-graphics"
 compile_unnethack
 mv $INSTALL/share/unnethack/unnethack.exe $INSTALL/share/unnethack/UnNetHack.exe
 
