@@ -19,7 +19,7 @@ function compile_unnethack {
 		--with-group="`id -gn`" \
 		--build=i686-pc-mingw32 \
 		--without-compression --disable-file-areas \
-		--disable-status-color --enable-score-on-botl --enable-realtime-on-botl \
+		--enable-score-on-botl --enable-realtime-on-botl \
 		$GRAPHICS \
 		&& make --trace install
 }
