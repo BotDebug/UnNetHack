@@ -3,8 +3,8 @@
 
 #include "hack.h"
 
-int NDECL((*afternmv));
-int NDECL((*occupation));
+int (*afternmv)(void);
+int (*occupation)(void);
 
 /* from xxxmain.c */
 const char *hname = 0;      /* name of the game (argv[0] of main) */
@@ -214,6 +214,9 @@ NEARDATA struct spell spl_book[MAXSPELL + 1] = {DUMMY};
 
 long game_loop_counter = 1L;
 NEARDATA long moves = 1L, monstermoves = 1L;
+long hero_seq = 1L << 3; /* hero_seq: sequence number for hero movement, 'moves*8 + n'
+                          * where n is usually 1, sometimes 2 when Fast/Very_fast, maybe
+                          * higher if polymorphed into something that's even faster */
 /* These diverge when player is Fast */
 NEARDATA long wailmsg = 0L;
 
@@ -343,7 +346,7 @@ boolean curses_stupid_hack = 1;
 
 /* dummy routine used to force linkage */
 void
-decl_init()
+decl_init(void)
 {
     return;
 }

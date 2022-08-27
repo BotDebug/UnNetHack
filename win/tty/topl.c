@@ -14,16 +14,14 @@
 #define C(c)    (0x1f & (c))
 #endif
 
-STATIC_DCL void FDECL(redotoplin, (const char*));
-STATIC_DCL void FDECL(topl_putsym, (CHAR_P));
-STATIC_DCL void FDECL(removetopl, (int));
-
-#ifdef OVLB
+static void redotoplin(const char*);
+static void topl_putsym(char);
+static void removetopl(int);
 
 int
-tty_doprev_message()
+tty_doprev_message(void)
 {
-    register struct WinDesc *cw = wins[WIN_MESSAGE];
+    struct WinDesc *cw = wins[WIN_MESSAGE];
 
     winid prevmsg_win;
     int i;
@@ -116,12 +114,8 @@ tty_doprev_message()
     return 0;
 }
 
-#endif /* OVLB */
-#ifdef OVL1
-
-STATIC_OVL void
-redotoplin(str)
-const char *str;
+static void
+redotoplin(const char *str)
 {
     int otoplin = ttyDisplay->toplin;
     home();
@@ -144,7 +138,12 @@ show_topl(const char *str)
 {
     struct WinDesc *cw = wins[WIN_MESSAGE];
 
-    if (!(cw->flags & WIN_STOP)) {
+    /* show if either STOP isn't set or current message specifies NOSTOP */
+    if ((cw->flags & (WIN_STOP | WIN_NOSTOP)) != WIN_STOP) {
+        /* NOSTOP cancels persistent STOP and is a one-shot operation;
+           force both to be cleared (no-op for either bit that isn't set) */
+        cw->flags &= ~(WIN_STOP | WIN_NOSTOP);
+
         if (ttyDisplay->cury && ttyDisplay->toplin == TOPLINE_NON_EMPTY) {
             tty_clear_nhwindow(WIN_MESSAGE);
         }
@@ -161,9 +160,9 @@ show_topl(const char *str)
 }
 
 void
-remember_topl()
+remember_topl(void)
 {
-    register struct WinDesc *cw = wins[WIN_MESSAGE];
+    struct WinDesc *cw = wins[WIN_MESSAGE];
     int idx = cw->maxrow;
     unsigned len = strlen(toplines) + 1;
 
@@ -186,10 +185,9 @@ remember_topl()
 }
 
 void
-addtopl(s)
-const char *s;
+addtopl(const char *s)
 {
-    register struct WinDesc *cw = wins[WIN_MESSAGE];
+    struct WinDesc *cw = wins[WIN_MESSAGE];
 
     tty_curs(BASE_WINDOW, cw->curx+1, cw->cury);
     putsyms(s);
@@ -197,11 +195,8 @@ const char *s;
     ttyDisplay->toplin = 1;
 }
 
-#endif /* OVL1 */
-#ifdef OVL2
-
 void
-more()
+more(void)
 {
     struct WinDesc *cw = wins[WIN_MESSAGE];
 
@@ -222,8 +217,11 @@ more()
 
     xwaitforspace("\033 ");
 
-    if(morc == '\033')
-        cw->flags |= WIN_STOP;
+    if (morc == '\033') {
+        if (!(cw->flags & WIN_NOSTOP)) {
+            cw->flags |= WIN_STOP;
+        }
+    }
 
     if(ttyDisplay->toplin && cw->cury) {
         docorner(1, cw->cury+1);
@@ -239,13 +237,13 @@ more()
 }
 
 void
-update_topl(bp)
-register const char *bp;
+update_topl(const char *bp)
 {
-    register char *tl, *otl;
-    register int n0;
+    char *tl, *otl;
+    int n0;
     int notdied = 1;
     struct WinDesc *cw = wins[WIN_MESSAGE];
+    boolean skip = (cw->flags & (WIN_STOP | WIN_NOSTOP)) == WIN_STOP;
 
     /* If there is room on the line, print message on same line */
     /* But messages like "You die..." deserve their own line */
@@ -257,14 +255,17 @@ register const char *bp;
         Strcat(toplines, "  ");
         Strcat(toplines, bp);
         cw->curx += 2;
-        if(!(cw->flags & WIN_STOP))
+        if (!skip) {
             addtopl(bp);
+        }
+
         return;
-    } else if (!(cw->flags & WIN_STOP)) {
-        if(ttyDisplay->toplin == 1) more();
-        else if(cw->cury) { /* for when flags.toplin == 2 && cury > 1 */
-            docorner(1, cw->cury+1); /* reset cury = 0 if redraw screen */
-            cw->curx = cw->cury = 0;/* from home--cls() & docorner(1,n) */
+    } else if (!skip) {
+        if (ttyDisplay->toplin == TOPLINE_NEED_MORE) {
+            more();
+        } else if (cw->cury) { /* for toplin==TOPLINE_NON_EMPTY && cury > 1 */
+            docorner(1, cw->cury + 1); /* reset cury = 0 if redraw screen */
+            cw->curx = cw->cury = 0;   /* from home--cls() & docorner(1,n,0) */
         }
     }
     remember_topl();
@@ -286,12 +287,10 @@ register const char *bp;
     if(!(cw->flags & WIN_STOP)) redotoplin(toplines);
 }
 
-STATIC_OVL
-void
-topl_putsym(c)
-char c;
+static void
+topl_putsym(char c)
 {
-    register struct WinDesc *cw = wins[WIN_MESSAGE];
+    struct WinDesc *cw = wins[WIN_MESSAGE];
 
     if(cw == (struct WinDesc *) 0) panic("Putsym window MESSAGE nonexistant");
 
@@ -328,16 +327,14 @@ char c;
 }
 
 void
-putsyms(str)
-const char *str;
+putsyms(const char *str)
 {
     while(*str)
         topl_putsym(*str++);
 }
 
-STATIC_OVL void
-removetopl(n)
-register int n;
+static void
+removetopl(int n)
 {
     /* assume addtopl() has been done, so ttyDisplay->toplin is already set */
     while (n-- > 0) putsyms("\b \b");
@@ -346,9 +343,7 @@ register int n;
 extern char erase_char;     /* from xxxtty.c; don't need kill_char */
 
 char
-tty_yn_function(query, resp, def)
-const char *query, *resp;
-char def;
+tty_yn_function(const char *query, const char *resp, char def)
 /*
  *   Generic yes/no function. 'def' is the default (returned by space or
  *   return; 'esc' returns 'q', or 'n', or the default, depending on
@@ -361,16 +356,19 @@ char def;
  *   be shown in the prompt to the user but will be acceptable as input.
  */
 {
-    register char q;
+    char q;
     char rtmp[40];
     boolean digit_ok, allow_num;
     struct WinDesc *cw = wins[WIN_MESSAGE];
     boolean doprev = 0;
     char prompt[BUFSZ];
 
-    if(ttyDisplay->toplin == 1 && !(cw->flags & WIN_STOP)) more();
-    cw->flags &= ~WIN_STOP;
-    ttyDisplay->toplin = 3; /* special prompt state */
+    if (ttyDisplay->toplin == TOPLINE_NEED_MORE &&
+         (cw->flags & (WIN_STOP | WIN_NOSTOP)) != WIN_STOP) {
+        more();
+    }
+    cw->flags &= ~(WIN_STOP | WIN_NOSTOP);
+    ttyDisplay->toplin = TOPLINE_SPECIAL_PROMPT;
     ttyDisplay->inread++;
     if (resp) {
         char *rb, respbuf[QBUFSZ];
@@ -494,8 +492,6 @@ clean_up:
 
     return q;
 }
-
-#endif /* OVL2 */
 
 #endif /* TTY_GRAPHICS */
 

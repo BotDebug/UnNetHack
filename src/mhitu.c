@@ -6,35 +6,33 @@
 
 static struct obj *mon_currwep = (struct obj *) 0;
 
-STATIC_DCL void FDECL(urustm, (struct monst *, struct obj *));
-STATIC_DCL boolean FDECL(u_slip_free, (struct monst *, struct attack *));
-STATIC_DCL int FDECL(passiveum, (struct permonst *, struct monst *, struct attack *));
+static void urustm(struct monst *, struct obj *);
+static boolean u_slip_free(struct monst *, struct attack *);
+static int passiveum(struct permonst *, struct monst *, struct attack *);
 
 # ifdef SEDUCE
-static void FDECL(mayberem, (struct monst *, const char *, struct obj *, const char *));
+static void mayberem(struct monst *, const char *, struct obj *, const char *);
 # endif
 
-STATIC_DCL boolean FDECL(diseasemu, (struct permonst *));
-STATIC_DCL int FDECL(hitmu, (struct monst *, struct attack *));
-STATIC_DCL int FDECL(gulpmu, (struct monst *, struct attack *));
-STATIC_DCL int FDECL(explmu, (struct monst *, struct attack *, BOOLEAN_P));
-STATIC_DCL void FDECL(missmu, (struct monst *, BOOLEAN_P, struct attack *));
-STATIC_DCL void FDECL(mswings, (struct monst *, struct obj *));
-STATIC_DCL void FDECL(wildmiss, (struct monst *, struct attack *));
-STATIC_DCL int FDECL(mon_scream, (struct monst*, struct attack*));
+static boolean diseasemu(struct permonst *);
+static int hitmu(struct monst *, struct attack *);
+static int gulpmu(struct monst *, struct attack *);
+static int explmu(struct monst *, struct attack *, boolean);
+static void missmu(struct monst *, boolean, struct attack *);
+static void mswings(struct monst *, struct obj *);
+static void wildmiss(struct monst *, struct attack *);
+static int mon_scream(struct monst*, struct attack*);
 
-STATIC_DCL void FDECL(hitmsg, (struct monst *, struct attack *));
+static void hitmsg(struct monst *, struct attack *);
 
-STATIC_DCL void FDECL(invulnerability_messages, (struct monst *, BOOLEAN_P, BOOLEAN_P));
+static void invulnerability_messages(struct monst *, boolean, boolean);
 
 /* See comment in mhitm.c.  If we use this a lot it probably should be */
 /* changed to a parameter to mhitu. */
 static int dieroll;
 
-STATIC_OVL void
-hitmsg(mtmp, mattk)
-struct monst *mtmp;
-struct attack *mattk;
+static void
+hitmsg(struct monst *mtmp, struct attack *mattk)
 {
     int compat;
 
@@ -84,11 +82,8 @@ struct attack *mattk;
 }
 
 /* monster missed you */
-STATIC_OVL void
-missmu(mtmp, nearmiss, mattk)
-struct monst *mtmp;
-boolean nearmiss;
-struct attack *mattk;
+static void
+missmu(struct monst *mtmp, boolean nearmiss, struct attack *mattk)
 {
     if (!canspotmon(mtmp))
         map_invisible(mtmp->mx, mtmp->my);
@@ -104,10 +99,10 @@ struct attack *mattk;
     stop_occupation();
 }
 
-STATIC_OVL void
-mswings(mtmp, otemp)        /* monster swings obj */
-register struct monst *mtmp;
-register struct obj *otemp;
+static void
+mswings(struct monst *mtmp, struct obj *otemp)        /* monster swings obj */
+
+
 {
     if (!flags.verbose || Blind || !mon_visible(mtmp))
         return;
@@ -118,9 +113,7 @@ register struct obj *otemp;
 
 /* return how a poison attack was delivered */
 const char *
-mpoisons_subj(mtmp, mattk)
-struct monst *mtmp;
-struct attack *mattk;
+mpoisons_subj(struct monst *mtmp, struct attack *mattk)
 {
     if (mattk->aatyp == AT_WEAP) {
         struct obj *mwep = (mtmp == &youmonst) ? uwep : MON_WEP(mtmp);
@@ -136,7 +129,7 @@ struct attack *mattk;
 
 /* called when your intrinsic speed is taken away */
 void
-u_slow_down()
+u_slow_down(void)
 {
     HFast = 0L;
     if (!Fast)
@@ -146,10 +139,10 @@ u_slow_down()
     exercise(A_DEX, FALSE);
 }
 
-STATIC_OVL void
-wildmiss(mtmp, mattk)       /* monster attacked your displaced image */
-register struct monst *mtmp;
-register struct attack *mattk;
+static void
+wildmiss(struct monst *mtmp, struct attack *mattk)       /* monster attacked your displaced image */
+
+
 {
     int compat;
 
@@ -220,10 +213,10 @@ register struct attack *mattk;
 }
 
 void
-expels(mtmp, mdat, message)
-struct monst *mtmp;
-struct permonst *mdat; /* if mtmp is polymorphed, mdat != mtmp->data */
-boolean message;
+expels(struct monst *mtmp, struct permonst *mdat, boolean message)
+
+                       /* if mtmp is polymorphed, mdat != mtmp->data */
+
 {
     if (message) {
         if (is_animal(mdat))
@@ -266,11 +259,7 @@ boolean message;
 
 /* select a monster's next attack, possibly substituting for its usual one */
 struct attack *
-getmattk(magr, mdef, indx, prev_result, alt_attk_buf)
-struct monst *magr;
-struct monst *mdef UNUSED;
-int indx, prev_result[];
-struct attack *alt_attk_buf;
+getmattk(struct monst *magr, struct monst *mdef, int indx, int *prev_result, struct attack *alt_attk_buf)
 {
     struct permonst *mptr = magr->data;
     struct attack *attk = &mptr->mattk[indx];
@@ -375,8 +364,7 @@ struct attack *alt_attk_buf;
  *      take care of it...
  */
 int
-mattacku(mtmp)
-register struct monst *mtmp;
+mattacku(struct monst *mtmp)
 {
     struct  attack  *mattk, alt_attk;
     int i, j=0, tmp, sum[NATTK];
@@ -837,9 +825,8 @@ register struct monst *mtmp;
     return(0);
 }
 
-STATIC_OVL boolean
-diseasemu(mdat)
-struct permonst *mdat;
+static boolean
+diseasemu(struct permonst *mdat)
 {
     if (Sick_resistance) {
         You_feel("a slight illness.");
@@ -852,10 +839,8 @@ struct permonst *mdat;
 }
 
 /* check whether slippery clothing protects from hug or wrap attack */
-STATIC_OVL boolean
-u_slip_free(mtmp, mattk)
-struct monst *mtmp;
-struct attack *mattk;
+static boolean
+u_slip_free(struct monst *mtmp, struct attack *mattk)
 {
     struct obj *obj = (uarmc ? uarmc : uarm);
 
@@ -888,8 +873,7 @@ struct attack *mattk;
 
 /* armor that sufficiently covers the body might be able to block magic */
 int
-magic_negation(mon)
-struct monst *mon;
+magic_negation(struct monst *mon)
 {
     struct obj *armor;
     int armpro = 0;
@@ -933,10 +917,8 @@ struct monst *mon;
  *    3 if the monster lives but teleported/paralyzed, so it can't keep
  *         attacking you
  */
-STATIC_OVL int
-hitmu(mtmp, mattk)
-register struct monst *mtmp;
-register struct attack  *mattk;
+static int
+hitmu(struct monst *mtmp, struct attack *mattk)
 {
     struct permonst *mdat = mtmp->data;
     int uncancelled, ptmp;
@@ -1250,7 +1232,7 @@ dopois:
         break;
 
     case AD_LEGS:
-    { register long side = rn2(2) ? RIGHT_SIDE : LEFT_SIDE;
+    { long side = rn2(2) ? RIGHT_SIDE : LEFT_SIDE;
       const char *sidestr = (side == RIGHT_SIDE) ? "right" : "left";
 
       /* This case is too obvious to ignore, but Nethack is not in
@@ -1357,7 +1339,7 @@ do_stone:
                 if (u_slip_free(mtmp, mattk)) {
                     dmg = 0;
                 } else {
-                    pline("%s %s itself around you!", Monnam(mtmp),
+                    urgent_pline("%s %s itself around you!", Monnam(mtmp),
                           is_vegetation(mdat) ? "winds" : "swings");
                     u.ustuck = mtmp;
                 }
@@ -1370,7 +1352,7 @@ do_stone:
                         !Is_medusa_level(&u.uz) &&
                         !Is_waterlevel(&u.uz);
 
-                    pline("%s drowns you...", Monnam(mtmp));
+                    urgent_pline("%s drowns you...", Monnam(mtmp));
                     killer.format = KILLED_BY_AN;
                     Sprintf(killer.name, "%s by %s",
                             moat ? "moat" : "pool of water",
@@ -1392,7 +1374,7 @@ do_stone:
         if (uncancelled && !rn2(4) && u.ulycn == NON_PM &&
             !Protection_from_shape_changers &&
             !defends(AD_WERE, uwep)) {
-            You_feel("feverish.");
+            urgent_pline("You feel feverish.");
             exercise(A_CON, FALSE);
             set_ulycn(monsndx(mdat));
             retouch_equipment(2);
@@ -1944,7 +1926,7 @@ do_stone:
  * to see if an engulfing attack should immediately take affect, like
  * a passive attack. TRUE if engulfing blindness occurred */
 boolean
-gulp_blnd_check()
+gulp_blnd_check(void)
 {
     struct attack *mattk;
 
@@ -1960,15 +1942,13 @@ gulp_blnd_check()
 }
 
 /* monster swallows you, or damage if u.uswallow */
-STATIC_OVL int
-gulpmu(mtmp, mattk)
-struct monst *mtmp;
-struct attack  *mattk;
+static int
+gulpmu(struct monst *mtmp, struct attack *mattk)
 {
     struct trap *t = t_at(u.ux, u.uy);
     int tmp = d((int)mattk->damn, (int)mattk->damd);
     int tim_tmp;
-    register struct obj *otmp2;
+    struct obj *otmp2;
     int i;
     boolean physical_damage = FALSE;
 
@@ -1996,11 +1976,11 @@ struct attack  *mattk;
              * like horses for now :-)
              */
             Strcpy(buf, mon_nam(u.usteed));
-            pline ("%s lunges forward and plucks you off %s!",
+            urgent_pline ("%s lunges forward and plucks you off %s!",
                    Monnam(mtmp), buf);
             dismount_steed(DISMOUNT_ENGULFED);
         } else {
-            pline("%s engulfs you!", Monnam(mtmp));
+            urgent_pline("%s engulfs you!", Monnam(mtmp));
         }
         stop_occupation();
         reset_occupations();    /* behave as if you had moved */
@@ -2256,11 +2236,8 @@ struct attack  *mattk;
 }
 
 /* monster explodes in your face */
-STATIC_OVL int
-explmu(mtmp, mattk, ufound)
-struct monst *mtmp;
-struct attack  *mattk;
-boolean ufound;
+static int
+explmu(struct monst *mtmp, struct attack *mattk, boolean ufound)
 {
     boolean physical_damage = TRUE, kill_agr = TRUE;
 
@@ -2363,9 +2340,7 @@ common:
 
 /* monster gazes at you */
 int
-gazemu(mtmp, mattk)
-struct monst *mtmp;
-struct attack *mattk;
+gazemu(struct monst *mtmp, struct attack *mattk)
 {
     static const char *const reactions[] = {
         "confused",              /* [0] */
@@ -2380,7 +2355,7 @@ struct attack *mattk;
 
     /* assumes that hero has to see monster's gaze in order to be
        affected, rather than monster just having to look at hero;
-       when hallucinating, hero's brain doesn't register what
+       when hallucinating, hero's brain doesn't what
        it's seeing correctly so the gaze is usually ineffective
        [this could be taken a lot farther and select a gaze effect
        appropriate to what's currently being displayed, giving
@@ -2433,7 +2408,7 @@ struct attack *mattk;
             stop_occupation();
             if(poly_when_stoned(youmonst.data) && polymon(PM_STONE_GOLEM))
                 break;
-            You("turn to stone...");
+            urgent_pline("You turn to stone...");
             killer.format = KILLED_BY;
             Strcpy(killer.name, mtmp->data->mname);
             done(STONING);
@@ -2652,9 +2627,7 @@ struct attack *mattk;
 
 /* mtmp hits you for n points damage */
 void
-mdamageu(mtmp, n)
-struct monst *mtmp;
-int n;
+mdamageu(struct monst *mtmp, int n)
 {
     showdmg(n, TRUE);
     flags.botl = 1;
@@ -2672,13 +2645,14 @@ int n;
  *         2 if wrong gender for nymph
  */
 int
-could_seduce(magr, mdef, mattk)
-struct monst *magr, *mdef;
-struct attack *mattk; /* non NULL: current attack; NULL: general capability */
+could_seduce(
+    struct monst *magr,
+    struct monst *mdef,
+    struct attack *mattk) /**< non NULL: current attack; NULL: general capability */
 {
     struct permonst *pagr;
     boolean agrinvis, defperc;
-    xchar genagr, gendef;
+    xint16 genagr, gendef;
     int adtyp;
 
     if (is_animal(magr->data)) return (0);
@@ -2727,8 +2701,7 @@ struct attack *mattk; /* non NULL: current attack; NULL: general capability */
 #ifdef SEDUCE
 /* returns 1 if monster teleported (or hero leaves monster's vicinity) */
 int
-doseduce(mon)
-struct monst *mon;
+doseduce(struct monst *mon)
 {
     struct obj *ring, *nring;
     boolean fem = (mon->data == &mons[PM_SUCCUBUS]); /* otherwise incubus */
@@ -2857,9 +2830,9 @@ struct monst *mon;
     }
 
     if (!uarmc && !uarmf && !uarmg && !uarms && !uarmh && !uarmu) {
-        pline("%s murmurs sweet nothings into your ear.", Who);
+        urgent_pline("%s murmurs sweet nothings into your ear.", Who);
     } else {
-        pline("%s murmurs in your ear, while helping you undress.", Who);
+        urgent_pline("%s murmurs in your ear, while helping you undress.", Who);
     }
     mayberem(mon, Who, uarmc, cloak_simple_name(uarmc));
     if (!uarmc) {
@@ -2903,7 +2876,7 @@ struct monst *mon;
         adjalign(1);
 
     /* by this point you have discovered mon's identity, blind or not... */
-    pline("Time stands still while you and %s lie in each other's arms...",
+    urgent_pline("Time stands still while you and %s lie in each other's arms...",
           noit_mon_nam(mon));
     /* 3.6.1: a combined total for charisma plus intelligence of 35-1
        used to guarantee successful outcome; now total maxes out at 32
@@ -3035,8 +3008,7 @@ struct monst *mon;
 #endif /* SEDUCE */
 
 void
-maybe_freeze_u(pdmg)
-int* pdmg;
+maybe_freeze_u(int *pdmg)
 {
     if (Levitation || Flying) {
         if (pdmg) (*pdmg) = 0;
@@ -3073,12 +3045,12 @@ int* pdmg;
 }
 
 #ifdef SEDUCE
-STATIC_OVL void
-mayberem(mon, seducer, obj, str)
-struct monst *mon;
-const char *seducer; /* only used for alternate message */
-struct obj *obj;
-const char *str;
+static void
+mayberem(struct monst *mon, const char *seducer, struct obj *obj, const char *str)
+
+                     /* only used for alternate message */
+
+
 {
     char qbuf[QBUFSZ];
 
@@ -3115,10 +3087,8 @@ const char *str;
 }
 #endif  /* SEDUCE */
 
-STATIC_OVL int
-mon_scream(mtmp, mattk)
-struct monst* mtmp;
-struct attack* mattk;
+static int
+mon_scream(struct monst *mtmp, struct attack *mattk)
 {
     int effect = 0;
     int dmg = d(mattk->damn, mattk->damd);
@@ -3165,11 +3135,8 @@ struct attack* mattk;
  *  to know whether hero reverted in order to decide whether passive
  *  damage applies.
  */
-STATIC_OVL int
-passiveum(olduasmon, mtmp, mattk)
-struct permonst *olduasmon;
-struct monst *mtmp;
-struct attack *mattk;
+static int
+passiveum(struct permonst *olduasmon, struct monst *mtmp, struct attack *mattk)
 {
     int i, tmp;
     struct attack *oldu_mattk = 0;
@@ -3358,11 +3325,8 @@ assess_dmg:
     return 1;
 }
 
-STATIC_OVL void
-invulnerability_messages(mtmp, range2, youseeit)
-struct monst *mtmp;
-boolean range2;
-boolean youseeit;
+static void
+invulnerability_messages(struct monst *mtmp, boolean range2, boolean youseeit)
 {
     /* monsters won't attack you */
     if(mtmp == u.ustuck)
@@ -3377,7 +3341,7 @@ boolean youseeit;
 }
 
 struct monst *
-cloneu()
+cloneu(void)
 {
     struct monst *mon;
     int mndx = monsndx(youmonst.data);
